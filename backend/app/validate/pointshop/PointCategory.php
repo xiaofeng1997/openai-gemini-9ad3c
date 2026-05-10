@@ -23,14 +23,14 @@ class PointCategory extends Validate
     ];
 
     protected $message = [
-        'category_name.require' => '分类名称不能为空',
-        'category_name.max' => '分类名称最多50个字符',
-        'parent_id.number' => '上级分类ID必须为数字',
-        'parent_id.egt' => '上级分类ID不能小于0',
-        'sort.number' => '排序必须为数字',
-        'sort.egt' => '排序不能小于0',
-        'is_show.require' => '显示状态不能为空',
-        'is_show.in' => '显示状态值不正确',
+        'category_name.require' => 'category_name_require',
+        'category_name.max' => 'category_name_max',
+        'parent_id.number' => 'parent_id_number',
+        'parent_id.egt' => 'parent_id_egt',
+        'sort.number' => 'sort_number',
+        'sort.egt' => 'sort_egt',
+        'is_show.require' => 'is_show_require',
+        'is_show.in' => 'is_show_in',
     ];
 
     protected $scene = [

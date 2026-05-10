@@ -22,12 +22,12 @@ class PointOrder extends Validate
     ];
 
     protected $message = [
-        'order_id.require' => '订单ID不能为空',
-        'order_id.number' => '订单ID必须为数字',
-        'express_company.require' => '快递公司不能为空',
-        'express_company.max' => '快递公司最多50个字符',
-        'express_no.require' => '快递单号不能为空',
-        'express_no.max' => '快递单号最多50个字符',
+        'order_id.require' => 'order_id_require',
+        'order_id.number' => 'order_id_number',
+        'express_company.require' => 'express_company_require',
+        'express_company.max' => 'express_company_max',
+        'express_no.require' => 'express_no_require',
+        'express_no.max' => 'express_no_max',
     ];
 
     protected $scene = [

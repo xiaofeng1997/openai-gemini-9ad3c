@@ -5,11 +5,11 @@ export function getPointShopIndex() {
 }
 
 export function getPointGoodsList(params: Record<string, any>) {
-    return request.get('pointshop/goods/list', { params })
+    return request.get('pointshop/goodsList', { params })
 }
 
 export function getPointGoodsDetail(goods_id: number) {
-    return request.get(`pointshop/goods/detail/${goods_id}`)
+    return request.get(`pointshop/goodsDetail/${goods_id}`)
 }
 
 export function pointExchange(params: Record<string, any>) {
@@ -17,17 +17,17 @@ export function pointExchange(params: Record<string, any>) {
 }
 
 export function getPointOrderList(params: Record<string, any>) {
-    return request.get('pointshop/order/list', { params })
+    return request.get('pointshop/orderList', { params })
 }
 
 export function getPointOrderDetail(order_id: number) {
-    return request.get(`pointshop/order/detail/${order_id}`)
+    return request.get(`pointshop/orderDetail/${order_id}`)
 }
 
 export function cancelPointOrder(order_id: number) {
-    return request.put(`pointshop/order/cancel/${order_id}`)
+    return request.put(`pointshop/cancelOrder/${order_id}`)
 }
 
 export function confirmPointReceive(order_id: number) {
-    return request.put(`pointshop/order/confirm/${order_id}`)
+    return request.put(`pointshop/confirmReceive/${order_id}`)
 }

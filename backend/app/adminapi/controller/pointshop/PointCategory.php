@@ -13,38 +13,19 @@ namespace app\adminapi\controller\pointshop;
 
 use app\service\admin\pointshop\PointCategoryService;
 use core\base\BaseAdminController;
-use think\Response;
 
-/**
- * 积分商城分类控制器
- * Class PointCategory
- * @package app\adminapi\controller\pointshop
- */
 class PointCategory extends BaseAdminController
 {
-    /**
-     * 分类列表
-     * @return Response
-     */
     public function lists()
     {
         return success((new PointCategoryService())->getList());
     }
 
-    /**
-     * 分类详情
-     * @param int $category_id
-     * @return Response
-     */
     public function info(int $category_id)
     {
         return success((new PointCategoryService())->getInfo($category_id));
     }
 
-    /**
-     * 添加分类
-     * @return Response
-     */
     public function add()
     {
         $data = $this->request->params([
@@ -59,11 +40,6 @@ class PointCategory extends BaseAdminController
         return success('ADD_SUCCESS', ['category_id' => $res]);
     }
 
-    /**
-     * 编辑分类
-     * @param int $category_id
-     * @return Response
-     */
     public function edit(int $category_id)
     {
         $data = $this->request->params([
@@ -78,11 +54,6 @@ class PointCategory extends BaseAdminController
         return success('EDIT_SUCCESS');
     }
 
-    /**
-     * 删除分类
-     * @param int $category_id
-     * @return Response
-     */
     public function del(int $category_id)
     {
         (new PointCategoryService())->del($category_id);

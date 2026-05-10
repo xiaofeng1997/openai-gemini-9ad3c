@@ -11,42 +11,25 @@
 
 namespace app\model\pointshop;
 
+use app\model\member\Member;
 use core\base\BaseModel;
 use think\model\concern\SoftDelete;
 
-/**
- * 积分订单模型
- * Class PointOrder
- * @package app\model\pointshop
- */
 class PointOrder extends BaseModel
 {
     use SoftDelete;
 
     protected $pk = 'order_id';
     protected $name = 'point_order';
-
     protected $deleteTime = 'delete_time';
     protected $defaultSoftDelete = 0;
+    protected $type = ['address' => 'json'];
 
-    protected $type = [
-        'address' => 'json',
-    ];
+    const STATUS_CANCEL = -1;
+    const STATUS_WAIT_DELIVER = 1;
+    const STATUS_DELIVERED = 2;
+    const STATUS_COMPLETED = 3;
 
-    /**
-     * 订单状态
-     */
-    const STATUS_WAIT = 1;  // 待发货
-    const STATUS_DELIVER = 2;  // 已发货
-    const STATUS_COMPLETE = 3;  // 已完成
-    const STATUS_CANCEL = -1;  // 已取消
-
-    /**
-     * 获取状态名称
-     * @param $value
-     * @param $data
-     * @return string
-     */
     public function getStatusNameAttr($value, $data)
     {
         $status = [
@@ -58,47 +41,34 @@ class PointOrder extends BaseModel
         return $status[$data['status']] ?? '';
     }
 
-    /**
-     * 会员关联
-     */
     public function member()
     {
-        return $this->hasOne(\app\model\member\Member::class, 'member_id', 'member_id')
+        return $this->hasOne(Member::class, 'member_id', 'member_id')
+            ->joinType('left')
             ->bind(['nickname', 'mobile', 'headimg']);
     }
 
-    /**
-     * 商品关联
-     */
     public function goods()
     {
         return $this->hasOne(PointGoods::class, 'goods_id', 'goods_id')
+            ->joinType('left')
             ->bind(['goods_name', 'goods_image', 'point_price']);
     }
 
-    /**
-     * 关键字搜索
-     */
     public function searchKeywordAttr($query, $value, $data)
     {
         if ($value) {
-            $query->where('order_no|member.nickname|member.mobile', 'like', '%' . $this->handelSpecialCharacter($value) . '%');
+            $query->whereLike('order_no|member.nickname|member.mobile', '%' . $this->handelSpecialCharacter($value) . '%');
         }
     }
 
-    /**
-     * 状态搜索
-     */
     public function searchStatusAttr($query, $value, $data)
     {
         if ($value !== '') {
-            $query->where('status', '=', $value);
+            $query->where('status', $value);
         }
     }
 
-    /**
-     * 时间搜索
-     */
     public function searchCreateTimeAttr($query, $value, $data)
     {
         if (!empty($value)) {

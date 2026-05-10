@@ -15,11 +15,6 @@ use app\model\pointshop\PointOrder;
 use core\base\BaseAdminService;
 use core\exception\AdminException;
 
-/**
- * 积分订单服务层
- * Class PointOrderService
- * @package app\service\admin\pointshop
- */
 class PointOrderService extends BaseAdminService
 {
     public function __construct()
@@ -28,14 +23,9 @@ class PointOrderService extends BaseAdminService
         $this->model = new PointOrder();
     }
 
-    /**
-     * 订单分页列表
-     * @param array $where
-     * @return array
-     */
     public function getPage(array $where = [])
     {
-        $field = 'order_id, order_no, member_id, goods_id, point_num, address, express_company, express_no, status, create_time, update_time';
+        $field = 'order_id, order_no, member_id, goods_id, num, point_num, address, express_company, express_no, status, create_time, update_time, delivery_time';
         $searchModel = $this->model->withSearch(['keyword', 'status', 'create_time'], $where)
             ->with(['member', 'goods'])
             ->field($field)
@@ -44,34 +34,22 @@ class PointOrderService extends BaseAdminService
         return $this->pageQuery($searchModel);
     }
 
-    /**
-     * 订单详情
-     * @param int $order_id
-     * @return array
-     */
     public function getInfo(int $order_id)
     {
         return $this->model->with(['member', 'goods'])->where(['order_id' => $order_id])->findOrEmpty()->toArray();
     }
 
-    /**
-     * 订单发货
-     * @param int $order_id
-     * @param string $express_company
-     * @param string $express_no
-     * @return true
-     */
     public function deliver(int $order_id, string $express_company, string $express_no)
     {
         $order = $this->model->find($order_id);
         if (empty($order)) {
-            throw new AdminException('ORDER_NOT_EXIST');
+            throw new AdminException('pointshop_order_not_exist');
         }
-        if ($order['status'] != PointOrder::STATUS_WAIT) {
-            throw new AdminException('ORDER_CANNOT_DELIVER');
+        if ($order['status'] != PointOrder::STATUS_WAIT_DELIVER) {
+            throw new AdminException('pointshop_order_cannot_deliver');
         }
         $this->model->where(['order_id' => $order_id])->update([
-            'status' => PointOrder::STATUS_DELIVER,
+            'status' => PointOrder::STATUS_DELIVERED,
             'express_company' => $express_company,
             'express_no' => $express_no,
             'delivery_time' => time(),
@@ -80,10 +58,6 @@ class PointOrderService extends BaseAdminService
         return true;
     }
 
-    /**
-     * 获取订单状态列表
-     * @return array
-     */
     public function getStatusList()
     {
         return [

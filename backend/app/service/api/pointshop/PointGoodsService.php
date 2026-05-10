@@ -11,21 +11,15 @@
 
 namespace app\service\api\pointshop;
 
-use app\model\api\pointshop\PointGoods as GoodsModel;
+use app\model\pointshop\PointGoods;
 use app\model\pointshop\PointCategory;
 use think\facade\Cache;
 
-class PointGoodsService extends BaseApiService
+class PointGoodsService
 {
-    public function __construct()
+    public function getIndexData(int $member_id = 0)
     {
-        parent::__construct();
-        $this->model = new GoodsModel();
-    }
-
-    public function getIndexData()
-    {
-        $cacheKey = 'pointshop_index_' . $this->member_id;
+        $cacheKey = 'pointshop_index_' . $member_id;
         $cache = Cache::get($cacheKey);
         if ($cache) {
             return $cache;
@@ -37,7 +31,7 @@ class PointGoodsService extends BaseApiService
             ->select()
             ->toArray();
 
-        $goods = $this->model
+        $goods = (new PointGoods())
             ->where(['status' => 1])
             ->where('stock', '>', 0)
             ->order('sort desc, goods_id desc')
@@ -69,7 +63,7 @@ class PointGoodsService extends BaseApiService
         $page = max(1, $params['page'] ?? 1);
         $limit = min(50, max(10, $params['limit'] ?? 20));
 
-        $query = $this->model->where($where);
+        $query = (new PointGoods())->where($where);
 
         $total = $query->count();
         $list = $query
@@ -94,16 +88,22 @@ class PointGoodsService extends BaseApiService
             return $cache;
         }
 
-        $goods = $this->model
+        $goods = (new PointGoods())
             ->where(['goods_id' => $goods_id, 'status' => 1])
             ->find()
             ->toArray() ?? [];
 
         if (empty($goods)) {
-            throw new \core\exception\ApiException('GOODS_NOT_EXIST');
+            throw new \core\exception\ApiException('pointshop_goods_not_exist');
         }
 
         Cache::set($cacheKey, $goods, 300);
         return $goods;
+    }
+
+    public function clearGoodsCache(int $goods_id)
+    {
+        Cache::delete('pointshop_goods_' . $goods_id);
+        Cache::delete('pointshop_index_0');
     }
 }

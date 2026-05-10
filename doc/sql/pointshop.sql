@@ -3,6 +3,9 @@
 -- NIUCLOUD Lite AI
 -- =============================================
 
+SET NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS = 0;
+
 -- ----------------------------- 积分商品分类表 -----------------------------
 DROP TABLE IF EXISTS `nc_point_category`;
 CREATE TABLE `nc_point_category` (
@@ -43,7 +46,8 @@ CREATE TABLE `nc_point_goods` (
   PRIMARY KEY (`goods_id`),
   KEY `idx_category_id` (`category_id`),
   KEY `idx_status` (`status`),
-  KEY `idx_point_price` (`point_price`)
+  KEY `idx_point_price` (`point_price`),
+  KEY `idx_stock` (`stock`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='积分商品表';
 
 -- ----------------------------- 积分订单表 -----------------------------
@@ -73,12 +77,12 @@ CREATE TABLE `nc_point_order` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='积分订单表';
 
 -- ----------------------------- 初始分类数据 -----------------------------
-INSERT INTO `nc_point_category` (`category_id`, `category_name`, `parent_id`, `image`, `sort`, `is_show`, `create_time`, `update_time`) VALUES
-(1, '数码电子', 0, '', 100, 1, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
-(2, '生活用品', 0, '', 90, 1, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
-(3, '服饰配件', 0, '', 80, 1, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
-(4, '美食饮品', 0, '', 70, 1, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
-(5, '图书音像', 0, '', 60, 1, UNIX_TIMESTAMP(), UNIX_TIMESTAMP());
+INSERT INTO `nc_point_category` (`category_name`, `parent_id`, `image`, `sort`, `is_show`, `create_time`, `update_time`) VALUES
+('数码电子', 0, '', 100, 1, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('生活用品', 0, '', 90, 1, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('服饰配件', 0, '', 80, 1, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('美食饮品', 0, '', 70, 1, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
+('图书音像', 0, '', 60, 1, UNIX_TIMESTAMP(), UNIX_TIMESTAMP());
 
 -- ----------------------------- 初始商品数据 -----------------------------
 INSERT INTO `nc_point_goods` (`category_id`, `goods_name`, `goods_image`, `goods_images`, `point_price`, `price`, `stock`, `sales_num`, `limit_num`, `exchange_desc`, `sort`, `status`, `create_time`, `update_time`) VALUES
@@ -87,3 +91,5 @@ INSERT INTO `nc_point_goods` (`category_id`, `goods_name`, `goods_image`, `goods
 (2, '便携充电宝', '/static/images/pointshop/powerbank.jpg', '[]', 200, 89.00, 500, 0, 0, '10000mAh大容量，便携小巧', 80, 1, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
 (3, '时尚背包', '/static/images/pointshop/backpack.jpg', '[]', 800, 299.00, 50, 0, 1, '优质面料，大容量设计', 70, 1, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()),
 (4, '精选零食大礼包', '/static/images/pointshop/snacks.jpg', '[]', 150, 69.00, 300, 0, 0, '多种口味组合，满足不同需求', 60, 1, UNIX_TIMESTAMP(), UNIX_TIMESTAMP());
+
+SET FOREIGN_KEY_CHECKS = 1;

@@ -65,6 +65,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { getPointShopIndex, getPointGoodsList } from '@/api/pointshop'
+import { getMemberInfo } from '@/api/member'
 import useMemberStore from '@/stores/member'
 
 const router = useRouter()
@@ -76,13 +77,13 @@ const categoryId = ref(0)
 const goodsList = ref<any[]>([])
 const loading = ref(false)
 const page = ref(1)
+const hasMore = ref(true)
 const imageLoaded = ref<Record<string, boolean>>({})
 
 onMounted(() => {
-    memberPoint.value = memberStore.info?.point || 0
+    loadMemberInfo()
     loadIndex()
     loadGoods()
-
     window.addEventListener('scroll', handleScroll)
 })
 
@@ -90,10 +91,24 @@ onUnmounted(() => {
     window.removeEventListener('scroll', handleScroll)
 })
 
+const loadMemberInfo = async () => {
+    try {
+        const res: any = await getMemberInfo()
+        memberPoint.value = res.data?.point || 0
+        memberStore.updateInfo(res.data || {})
+    } catch (e) {
+        console.error(e)
+    }
+}
+
 const loadIndex = async () => {
     try {
-        const res = await getPointShopIndex()
-        categoryList.value = res.data.category || []
+        const res: any = await getPointShopIndex()
+        categoryList.value = res.data?.category || []
+        if (res.data?.goods_list?.length && !goodsList.value.length) {
+            goodsList.value = res.data.goods_list.slice(0, 8)
+            preloadImages(res.data.goods_list.slice(0, 8))
+        }
     } catch (e) {
         console.error(e)
     }
@@ -102,36 +117,32 @@ const loadIndex = async () => {
 const changeCategory = (id: number) => {
     categoryId.value = id
     page.value = 1
+    hasMore.value = true
     goodsList.value = []
     imageLoaded.value = {}
     loadGoods()
 }
 
 const loadGoods = async () => {
+    if (loading.value || !hasMore.value) return
     loading.value = true
     try {
-        const res = await getPointGoodsList({
+        const res: any = await getPointGoodsList({
             category_id: categoryId.value,
             page: page.value,
             limit: 20
         })
-        const newList = res.data.data || []
-
-        newList.forEach((item: any) => {
-            if (!imageLoaded.value[item.goods_id]) {
-                imageLoaded.value[item.goods_id] = false
-                const img = new Image()
-                img.onload = () => {
-                    imageLoaded.value[item.goods_id] = true
-                }
-                img.src = item.goods_image
-            }
-        })
+        const newList = res.data?.data || []
+        preloadImages(newList)
 
         if (page.value === 1) {
             goodsList.value = newList
         } else {
             goodsList.value = [...goodsList.value, ...newList]
+        }
+
+        if (newList.length < 20) {
+            hasMore.value = false
         }
     } catch (e) {
         console.error(e)
@@ -140,12 +151,25 @@ const loadGoods = async () => {
     }
 }
 
+const preloadImages = (list: any[]) => {
+    list.forEach((item: any) => {
+        if (!imageLoaded.value[item.goods_id]) {
+            imageLoaded.value[item.goods_id] = false
+            const img = new Image()
+            img.onload = () => {
+                imageLoaded.value[item.goods_id] = true
+            }
+            img.src = item.goods_image
+        }
+    })
+}
+
 const handleScroll = () => {
     const scrollTop = document.documentElement.scrollTop || document.body.scrollTop
     const clientHeight = document.documentElement.clientHeight
     const scrollHeight = document.documentElement.scrollHeight
 
-    if (scrollTop + clientHeight >= scrollHeight - 200 && !loading.value) {
+    if (scrollTop + clientHeight >= scrollHeight - 200 && !loading.value && hasMore.value) {
         page.value++
         loadGoods()
     }

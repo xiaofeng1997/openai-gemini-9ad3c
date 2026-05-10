@@ -3,7 +3,7 @@
         <div class="container">
             <div class="detail-content">
                 <div class="goods-image">
-                    <el-skeleton v-if="loading" animated />
+                    <div class="image-skeleton" v-if="loading"></div>
                     <img v-else :src="goodsDetail.goods_image" :alt="goodsDetail.goods_name" />
                 </div>
                 <div class="goods-info">
@@ -84,8 +84,8 @@ onMounted(async () => {
     const goods_id = Number(route.params.id)
 
     try {
-        const res = await getPointGoodsDetail(goods_id)
-        goodsDetail.value = res.data
+        const res: any = await getPointGoodsDetail(goods_id)
+        goodsDetail.value = res.data || {}
     } catch (e) {
         console.error(e)
     } finally {
@@ -97,7 +97,7 @@ onMounted(async () => {
 
 const loadAddress = async () => {
     try {
-        const res = await getMemberAddress({})
+        const res: any = await getMemberAddress({})
         addressList.value = res.data || []
         if (addressList.value.length) {
             const defaultAddr = addressList.value.find((item: any) => item.is_default === 1)
@@ -137,13 +137,14 @@ const confirmExchange = async () => {
         })
         ElMessage.success('兑换成功！')
         memberPoint.value -= goodsDetail.value.point_price
+        memberStore.updateInfo({ point: memberPoint.value })
         showAddressDialog.value = false
 
         setTimeout(() => {
             router.push('/web/member/point')
         }, 1500)
     } catch (e: any) {
-        ElMessage.error(e.message || '兑换失败')
+        ElMessage.error(e.msg || e.message || '兑换失败')
     } finally {
         exchanging.value = false
     }
@@ -197,6 +198,14 @@ const goAddressManage = () => {
         width: 100%;
         height: 100%;
         object-fit: cover;
+    }
+
+    .image-skeleton {
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite;
     }
 }
 
@@ -353,5 +362,10 @@ const goAddressManage = () => {
         color: #999;
         margin-bottom: 20px;
     }
+}
+
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
 }
 </style>

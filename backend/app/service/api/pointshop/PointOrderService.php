@@ -11,48 +11,40 @@
 
 namespace app\service\api\pointshop;
 
-use app\model\api\pointshop\PointOrder as OrderModel;
+use app\model\pointshop\PointOrder;
 use app\model\member\Member;
 use app\model\member\MemberAddress;
 use app\model\pointshop\PointGoods;
 use app\service\core\member\CoreMemberAccountService;
-use core\base\BaseApiService;
 use core\exception\ApiException;
 use think\facade\Db;
 use think\facade\Cache;
 
-class PointOrderService extends BaseApiService
+class PointOrderService
 {
     protected $lockKey = 'point_order_lock_';
 
-    public function __construct()
+    public function createOrder(int $member_id, array $data)
     {
-        parent::__construct();
-        $this->model = new OrderModel();
-    }
-
-    public function createOrder(array $data)
-    {
-        $member_id = $this->member_id;
         $goods_id = $data['goods_id'];
         $num = max(1, $data['num'] ?? 1);
         $address_id = $data['address_id'];
 
-        $lock = $this->lockKey . $goods_id;
+        $lock = $this->lockKey . $goods_id . '_' . $member_id;
         if (!Cache::get($lock)) {
             Cache::set($lock, 1, 10);
         } else {
-            throw new ApiException('请勿重复提交');
+            throw new ApiException('pointshop_repeat_submit');
         }
 
         try {
             $goods = (new PointGoods())->find($goods_id);
             if (empty($goods) || $goods['status'] != 1) {
-                throw new ApiException('GOODS_NOT_EXIST');
+                throw new ApiException('pointshop_goods_not_exist');
             }
 
             if ($goods['stock'] < $num) {
-                throw new ApiException('GOODS_STOCK_NOT_ENOUGH');
+                throw new ApiException('pointshop_stock_not_enough');
             }
 
             $address = (new MemberAddress())
@@ -60,14 +52,14 @@ class PointOrderService extends BaseApiService
                 ->find();
 
             if (empty($address)) {
-                throw new ApiException('ADDRESS_NOT_EXIST');
+                throw new ApiException('pointshop_address_not_exist');
             }
 
             $member = (new Member())->find($member_id);
             $total_point = $goods['point_price'] * $num;
 
             if ($member['point'] < $total_point) {
-                throw new ApiException('POINT_NOT_ENOUGH');
+                throw new ApiException('pointshop_point_not_enough');
             }
 
             Db::startTrans();
@@ -89,11 +81,11 @@ class PointOrderService extends BaseApiService
                         'address' => $address['address'],
                         'full_address' => $address['full_address'],
                     ],
-                    'status' => 1,
+                    'status' => PointOrder::STATUS_WAIT_DELIVER,
                     'create_time' => time(),
                 ];
 
-                $order = $this->model->create($order_data);
+                $order = (new PointOrder())->create($order_data);
 
                 (new PointGoods())
                     ->where(['goods_id' => $goods_id])
@@ -104,7 +96,7 @@ class PointOrderService extends BaseApiService
                 (new CoreMemberAccountService())
                     ->changePoint($member_id, -$total_point, 'pointshop_exchange', '积分兑换: ' . $goods['goods_name']);
 
-                Cache::delete('pointshop_goods_' . $goods_id);
+                (new PointGoodsService())->clearGoodsCache($goods_id);
 
                 Db::commit();
                 return $order->order_id;
@@ -117,9 +109,8 @@ class PointOrderService extends BaseApiService
         }
     }
 
-    public function getMemberOrderList(array $params)
+    public function getMemberOrderList(int $member_id, array $params)
     {
-        $member_id = $this->member_id;
         $where = [['member_id', '=', $member_id]];
 
         if ($params['status'] !== '') {
@@ -129,7 +120,7 @@ class PointOrderService extends BaseApiService
         $page = max(1, $params['page'] ?? 1);
         $limit = min(50, max(10, $params['limit'] ?? 20));
 
-        $query = $this->model->with(['goods'])->where($where);
+        $query = (new PointOrder())->with(['goods'])->where($where);
 
         $total = $query->count();
         $list = $query
@@ -146,40 +137,38 @@ class PointOrderService extends BaseApiService
         ];
     }
 
-    public function getOrderDetail(int $order_id)
+    public function getOrderDetail(int $member_id, int $order_id)
     {
-        $member_id = $this->member_id;
-        $order = $this->model
+        $order = (new PointOrder())
             ->with(['goods'])
             ->where(['order_id' => $order_id, 'member_id' => $member_id])
             ->find()
             ->toArray() ?? [];
 
         if (empty($order)) {
-            throw new ApiException('ORDER_NOT_EXIST');
+            throw new ApiException('pointshop_order_not_exist');
         }
 
         return $order;
     }
 
-    public function cancelOrder(int $order_id)
+    public function cancelOrder(int $member_id, int $order_id)
     {
-        $member_id = $this->member_id;
-        $order = $this->model->where(['order_id' => $order_id, 'member_id' => $member_id])->find();
+        $order = (new PointOrder())->where(['order_id' => $order_id, 'member_id' => $member_id])->find();
 
         if (empty($order)) {
-            throw new ApiException('ORDER_NOT_EXIST');
+            throw new ApiException('pointshop_order_not_exist');
         }
 
-        if ($order['status'] != 1) {
-            throw new ApiException('ORDER_CANNOT_CANCEL');
+        if ($order['status'] != PointOrder::STATUS_WAIT_DELIVER) {
+            throw new ApiException('pointshop_order_cannot_cancel');
         }
 
         Db::startTrans();
         try {
-            $this->model
+            (new PointOrder())
                 ->where(['order_id' => $order_id])
-                ->update(['status' => -1, 'update_time' => time()]);
+                ->update(['status' => PointOrder::STATUS_CANCEL, 'update_time' => time()]);
 
             (new PointGoods())
                 ->where(['goods_id' => $order['goods_id']])
@@ -190,7 +179,7 @@ class PointOrderService extends BaseApiService
             (new CoreMemberAccountService())
                 ->changePoint($member_id, $order['point_num'], 'pointshop_cancel', '取消订单退回积分: ' . $order['order_no']);
 
-            Cache::delete('pointshop_goods_' . $order['goods_id']);
+            (new PointGoodsService())->clearGoodsCache($order['goods_id']);
 
             Db::commit();
             return true;
@@ -200,22 +189,21 @@ class PointOrderService extends BaseApiService
         }
     }
 
-    public function confirmReceive(int $order_id)
+    public function confirmReceive(int $member_id, int $order_id)
     {
-        $member_id = $this->member_id;
-        $order = $this->model->where(['order_id' => $order_id, 'member_id' => $member_id])->find();
+        $order = (new PointOrder())->where(['order_id' => $order_id, 'member_id' => $member_id])->find();
 
         if (empty($order)) {
-            throw new ApiException('ORDER_NOT_EXIST');
+            throw new ApiException('pointshop_order_not_exist');
         }
 
-        if ($order['status'] != 2) {
-            throw new ApiException('ORDER_CANNOT_RECEIVE');
+        if ($order['status'] != PointOrder::STATUS_DELIVERED) {
+            throw new ApiException('pointshop_order_cannot_receive');
         }
 
-        $this->model
+        (new PointOrder())
             ->where(['order_id' => $order_id])
-            ->update(['status' => 3, 'update_time' => time()]);
+            ->update(['status' => PointOrder::STATUS_COMPLETED, 'update_time' => time()]);
 
         return true;
     }
