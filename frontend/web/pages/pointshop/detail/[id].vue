@@ -3,7 +3,8 @@
         <div class="container">
             <div class="detail-content">
                 <div class="goods-image">
-                    <img :src="goodsDetail.goods_image" :alt="goodsDetail.goods_name" />
+                    <el-skeleton v-if="loading" animated />
+                    <img v-else :src="goodsDetail.goods_image" :alt="goodsDetail.goods_name" />
                 </div>
                 <div class="goods-info">
                     <h1 class="goods-name">{{ goodsDetail.goods_name }}</h1>
@@ -24,83 +25,132 @@
                         <div class="my-point">
                             我的积分: <span>{{ memberPoint }}</span>
                         </div>
-                        <button class="exchange-btn" @click="handleExchange" :disabled="!canExchange">
+                        <el-button type="primary" size="large" @click="handleExchange" :disabled="!canExchange" :loading="exchanging">
                             {{ canExchange ? '立即兑换' : '积分不足' }}
-                        </button>
+                        </el-button>
                     </div>
                 </div>
             </div>
         </div>
+
+        <el-dialog v-model="showAddressDialog" title="选择收货地址" width="500px">
+            <div class="address-list" v-if="addressList.length">
+                <div class="address-item" v-for="item in addressList" :key="item.address_id" :class="{ active: selectedAddressId === item.address_id }" @click="selectedAddressId = item.address_id">
+                    <div class="address-info">
+                        <p class="address-name">{{ item.name }} {{ item.mobile }}</p>
+                        <p class="address-detail">{{ item.full_address }} {{ item.address }}</p>
+                    </div>
+                    <div class="address-check" v-if="selectedAddressId === item.address_id">✓</div>
+                </div>
+            </div>
+            <div class="no-address" v-else>
+                <p>暂无收货地址</p>
+                <el-button type="primary" @click="goAddressManage">去添加</el-button>
+            </div>
+            <template #footer>
+                <el-button @click="showAddressDialog = false">取消</el-button>
+                <el-button type="primary" @click="confirmExchange" :disabled="!selectedAddressId">确认兑换</el-button>
+            </template>
+        </el-dialog>
     </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import { getPointGoodsDetail, pointExchange } from '@/api/pointshop'
 import { getMemberAddress } from '@/api/member'
-import { useMemberStore } from '@/stores/member'
+import useMemberStore from '@/stores/member'
 
 const route = useRoute()
 const router = useRouter()
 const memberStore = useMemberStore()
 
+const loading = ref(true)
 const goodsDetail = ref<any>({})
 const memberPoint = ref(0)
 const addressList = ref<any[]>([])
+const selectedAddressId = ref<number | null>(null)
+const showAddressDialog = ref(false)
+const exchanging = ref(false)
 
 const canExchange = computed(() => {
     return memberPoint.value >= (goodsDetail.value.point_price || 0) && (goodsDetail.value.stock || 0) > 0
 })
 
 onMounted(async () => {
-    memberPoint.value = memberStore.info.point || 0
+    memberPoint.value = memberStore.info?.point || 0
     const goods_id = Number(route.params.id)
-    await loadGoodsDetail(goods_id)
-    await loadAddress()
-})
 
-const loadGoodsDetail = async (goods_id: number) => {
     try {
         const res = await getPointGoodsDetail(goods_id)
         goodsDetail.value = res.data
     } catch (e) {
         console.error(e)
+    } finally {
+        loading.value = false
     }
-}
+
+    await loadAddress()
+})
 
 const loadAddress = async () => {
     try {
         const res = await getMemberAddress({})
         addressList.value = res.data || []
+        if (addressList.value.length) {
+            const defaultAddr = addressList.value.find((item: any) => item.is_default === 1)
+            selectedAddressId.value = defaultAddr?.address_id || addressList.value[0].address_id
+        }
     } catch (e) {
         console.error(e)
     }
 }
 
 const handleExchange = async () => {
-    if (!canExchange.value) return
-
-    if (!addressList.value.length) {
-        alert('请先添加收货地址')
+    if (!canExchange.value) {
+        ElMessage.warning('无法兑换')
         return
     }
 
-    const defaultAddress = addressList.value.find((item: any) => item.is_default === 1) || addressList.value[0]
-
-    if (confirm(`确认使用 ${goodsDetail.value.point_price} 积分兑换此商品？`)) {
-        try {
-            await pointExchange({
-                goods_id: goodsDetail.value.goods_id,
-                address_id: defaultAddress.address_id,
-                num: 1
-            })
-            alert('兑换成功！')
-            router.push('/member/point')
-        } catch (e: any) {
-            alert(e.message || '兑换失败')
-        }
+    if (!addressList.value.length) {
+        ElMessage.warning('请先添加收货地址')
+        return
     }
+
+    showAddressDialog.value = true
+}
+
+const confirmExchange = async () => {
+    if (!selectedAddressId.value) {
+        ElMessage.warning('请选择收货地址')
+        return
+    }
+
+    exchanging.value = true
+    try {
+        await pointExchange({
+            goods_id: goodsDetail.value.goods_id,
+            address_id: selectedAddressId.value,
+            num: 1
+        })
+        ElMessage.success('兑换成功！')
+        memberPoint.value -= goodsDetail.value.point_price
+        showAddressDialog.value = false
+
+        setTimeout(() => {
+            router.push('/web/member/point')
+        }, 1500)
+    } catch (e: any) {
+        ElMessage.error(e.message || '兑换失败')
+    } finally {
+        exchanging.value = false
+    }
+}
+
+const goAddressManage = () => {
+    router.push('/web/member/address')
 }
 </script>
 
@@ -126,6 +176,7 @@ const handleExchange = async () => {
 
     @media (max-width: 768px) {
         flex-direction: column;
+        padding: 20px;
     }
 }
 
@@ -134,6 +185,7 @@ const handleExchange = async () => {
     height: 400px;
     border-radius: 12px;
     overflow: hidden;
+    background: #f5f5f5;
 
     @media (max-width: 768px) {
         flex: none;
@@ -155,6 +207,10 @@ const handleExchange = async () => {
         font-size: 28px;
         color: #333;
         margin: 0 0 24px;
+
+        @media (max-width: 768px) {
+            font-size: 20px;
+        }
     }
 
     .price-box {
@@ -167,6 +223,10 @@ const handleExchange = async () => {
             color: #ff6b6b;
             font-size: 36px;
             font-weight: bold;
+
+            @media (max-width: 768px) {
+                font-size: 28px;
+            }
         }
 
         .market-price {
@@ -182,6 +242,11 @@ const handleExchange = async () => {
         font-size: 14px;
         color: #666;
         margin-bottom: 30px;
+
+        @media (max-width: 768px) {
+            flex-wrap: wrap;
+            gap: 15px;
+        }
     }
 
     .exchange-desc {
@@ -208,6 +273,12 @@ const handleExchange = async () => {
         align-items: center;
         gap: 30px;
 
+        @media (max-width: 768px) {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+        }
+
         .my-point {
             font-size: 16px;
             color: #666;
@@ -217,26 +288,70 @@ const handleExchange = async () => {
                 font-weight: bold;
             }
         }
+    }
+}
 
-        .exchange-btn {
-            padding: 14px 48px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: #fff;
-            border: none;
-            border-radius: 30px;
+.address-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.address-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: all 0.3s;
+
+    &:hover {
+        border-color: #667eea;
+    }
+
+    &.active {
+        border-color: #667eea;
+        background: rgba(102, 126, 234, 0.05);
+    }
+
+    .address-info {
+        flex: 1;
+
+        .address-name {
             font-size: 16px;
-            cursor: pointer;
-            transition: opacity 0.3s;
-
-            &:hover:not(:disabled) {
-                opacity: 0.9;
-            }
-
-            &:disabled {
-                background: #ccc;
-                cursor: not-allowed;
-            }
+            color: #333;
+            margin: 0 0 8px;
         }
+
+        .address-detail {
+            font-size: 14px;
+            color: #666;
+            margin: 0;
+        }
+    }
+
+    .address-check {
+        width: 24px;
+        height: 24px;
+        background: #667eea;
+        color: #fff;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+    }
+}
+
+.no-address {
+    text-align: center;
+    padding: 40px;
+
+    p {
+        color: #999;
+        margin-bottom: 20px;
     }
 }
 </style>

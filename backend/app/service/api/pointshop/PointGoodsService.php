@@ -13,14 +13,8 @@ namespace app\service\api\pointshop;
 
 use app\model\api\pointshop\PointGoods as GoodsModel;
 use app\model\pointshop\PointCategory;
-use app\service\core\member\CoreMemberAccountService;
-use core\base\BaseApiService;
+use think\facade\Cache;
 
-/**
- * API端积分商品服务层
- * Class PointGoodsService
- * @package app\service\api\pointshop
- */
 class PointGoodsService extends BaseApiService
 {
     public function __construct()
@@ -29,62 +23,87 @@ class PointGoodsService extends BaseApiService
         $this->model = new GoodsModel();
     }
 
-    /**
-     * 获取商城首页数据
-     * @return array
-     */
     public function getIndexData()
     {
-        $category = (new PointCategory())->where(['is_show' => 1])->order('sort desc, category_id desc')->select()->toArray();
-        $goods = $this->model->where(['status' => 1])->order('sort desc, goods_id desc')->limit(10)->select()->toArray();
+        $cacheKey = 'pointshop_index_' . $this->member_id;
+        $cache = Cache::get($cacheKey);
+        if ($cache) {
+            return $cache;
+        }
 
-        return [
+        $category = (new PointCategory())
+            ->where(['is_show' => 1])
+            ->order('sort desc, category_id desc')
+            ->select()
+            ->toArray();
+
+        $goods = $this->model
+            ->where(['status' => 1])
+            ->where('stock', '>', 0)
+            ->order('sort desc, goods_id desc')
+            ->limit(20)
+            ->select()
+            ->toArray();
+
+        $result = [
             'category' => $category,
             'goods_list' => $goods,
         ];
+
+        Cache::set($cacheKey, $result, 60);
+        return $result;
     }
 
-    /**
-     * 获取商品列表
-     * @param array $params
-     * @return array
-     */
     public function getGoodsList(array $params)
     {
-        $where = [['status', '=', 1]];
+        $where = [['status', '=', 1], ['stock', '>', 0]];
+
         if (!empty($params['category_id'])) {
             $where[] = ['category_id', '=', $params['category_id']];
         }
+
         if (!empty($params['keyword'])) {
             $where[] = ['goods_name', 'like', '%' . $params['keyword'] . '%'];
         }
 
-        $page = $params['page'] ?? 1;
-        $limit = $params['limit'] ?? 20;
+        $page = max(1, $params['page'] ?? 1);
+        $limit = min(50, max(10, $params['limit'] ?? 20));
 
-        $list = $this->model->where($where)
+        $query = $this->model->where($where);
+
+        $total = $query->count();
+        $list = $query
             ->order('sort desc, goods_id desc')
-            ->paginate([
-                'list_rows' => $limit,
-                'page' => $page,
-            ]);
+            ->page($page, $limit)
+            ->select()
+            ->toArray();
 
-        return $list->toArray();
+        return [
+            'data' => $list,
+            'total' => $total,
+            'page' => $page,
+            'limit' => $limit,
+        ];
     }
 
-    /**
-     * 获取商品详情
-     * @param int $goods_id
-     * @return array
-     */
     public function getGoodsDetail(int $goods_id)
     {
-        $goods = $this->model->where(['goods_id' => $goods_id, 'status' => 1])->findOrEmpty()->toArray();
+        $cacheKey = 'pointshop_goods_' . $goods_id;
+        $cache = Cache::get($cacheKey);
+        if ($cache) {
+            return $cache;
+        }
+
+        $goods = $this->model
+            ->where(['goods_id' => $goods_id, 'status' => 1])
+            ->find()
+            ->toArray() ?? [];
 
         if (empty($goods)) {
             throw new \core\exception\ApiException('GOODS_NOT_EXIST');
         }
 
+        Cache::set($cacheKey, $goods, 300);
         return $goods;
     }
 }

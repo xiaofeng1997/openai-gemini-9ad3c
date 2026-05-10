@@ -7,7 +7,13 @@ const envData = loadEnv(envName, 'env')
 
 export default defineNuxtConfig({
     app: {
-        baseURL: '/web/'
+        baseURL: '/web/',
+        head: {
+            link: [
+                { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+                { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
+            ]
+        }
     },
     modules: [
         '@element-plus/nuxt',
@@ -20,12 +26,39 @@ export default defineNuxtConfig({
         envDir: '~/env',
         plugins: [
             topLevelAwait({
-                // The export name of top-level await promise for each chunk module
                 promiseExportName: '__tla',
-                // The function to generate import names of top-level await promise in each chunk module
                 promiseImportName: i => `__tla_${i}`
             }),
-        ]
+        ],
+        build: {
+            rollupOptions: {
+                output: {
+                    manualChunks: {
+                        'element-plus': ['element-plus'],
+                        'vue-core': ['vue', 'vue-router', 'pinia'],
+                        'swiper': ['swiper'],
+                    }
+                }
+            }
+        },
+        optimizeDeps: {
+            include: ['element-plus', 'vue', 'vue-router', 'pinia']
+        }
     },
-    ssr: false
+    ssr: false,
+    nitro: {
+        compressPublicAssets: true,
+        minify: true
+    },
+    experimental: {
+        payloadExtraction: true,
+        renderJsonPayloads: true
+    },
+    routeRules: {
+        '/web/**': {
+            headers: {
+                'Cache-Control': 'public, max-age=3600'
+            }
+        }
+    }
 })

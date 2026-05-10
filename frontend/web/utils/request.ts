@@ -19,6 +19,23 @@ interface FetchOptions {
     watch: boolean
 }
 
+let baseURLCache = ''
+let baseURLInitPromise: Promise<string> | null = null
+
+const getBaseURL = async (): Promise<string> => {
+    if (baseURLCache) return baseURLCache
+    if (baseURLInitPromise) return baseURLInitPromise
+
+    baseURLInitPromise = new Promise((resolve) => {
+        const runtimeConfig = useRuntimeConfig()
+        const url = runtimeConfig.public.VITE_APP_BASE_URL || `${location.origin}/api/`
+        baseURLCache = url.endsWith('/') ? url : url + '/'
+        resolve(baseURLCache)
+    })
+
+    return baseURLInitPromise
+}
+
 class Http {
     private options: FetchOptions = {
         baseURL: '',
@@ -27,20 +44,12 @@ class Http {
     }
 
     public constructor() {
-        /**
-         * 全局请求拦截器
-         */
         this.options.onRequest = (data) => {
             const runtimeConfig = useRuntimeConfig()
-
-            this.options.baseURL = runtimeConfig.public.VITE_APP_BASE_URL || `${location.origin}/api/`
             this.options.headers[runtimeConfig.public.VITE_REQUEST_HEADER_CHANNEL_KEY] = 'pc'
             if (getToken()) this.options.headers[runtimeConfig.public.VITE_REQUEST_HEADER_TOKEN_KEY] = getToken()
         }
 
-        /**
-         * 全局响应拦截器
-         */
         this.options.onResponse = ({ response, options }) => {
             const { _data: data } = response
             this.handleNetworkError(response)
@@ -48,7 +57,7 @@ class Http {
                 if (data.code == 1) {
                     if (options.showSuccessMessage) ElMessage({ message: data.msg, type: 'success' })
                 } else {
-                    if (options.showErrorMessage === false) return;
+                    if (options.showErrorMessage === false) return
                     if (data.code == 0 || data.code == 400) {
                         ElMessage({ message: data.msg, type: 'error' })
                     } else {
@@ -76,48 +85,43 @@ class Http {
         return this.request(url, 'DELETE', {}, config)
     }
 
-    /**
-     * 发送请求
-     * @param url
-     * @param method
-     * @param param
-     * @param config
-     */
     private request(url: string, method: string, param: AnyObject = {}, config: ConfigOption = {}) {
-        return new Promise((resolve, reject) => {
-            setTimeout(() => {
-                // 处理首次请求baseurl空的问题
-                const runtimeConfig = useRuntimeConfig()
-                !this.options.baseURL && (this.options.baseURL = runtimeConfig.public.VITE_APP_BASE_URL || `${location.origin}/api/`)
-                this.options.baseURL.substr(-1) != '/' && (this.options.baseURL += '/')
-                // 处理数组格式
-                for (const key in param.query) {
-                    if (param.query[key] instanceof Array) {
-                        param.query[key].forEach((item, index) => {
-                            param.query[`${key}[${index}]`] = item
-                        });
-                        delete param.query[key]
-                    }
+        return new Promise(async (resolve, reject) => {
+            const baseURL = await getBaseURL()
+
+            if (!this.options.baseURL) {
+                this.options.baseURL = baseURL
+            }
+
+            for (const key in param.query) {
+                if (param.query[key] instanceof Array) {
+                    param.query[key].forEach((item: any, index: number) => {
+                        param.query[`${key}[${index}]`] = item
+                    })
+                    delete param.query[key]
                 }
-                useFetch(url, { ...this.options, method, ...config, ...param }).then((response) => {
-                    const { data: { value }, error } = response
-                    if (value) {
-                        if (value.code && value.code == 1) {
+            }
+
+            const fullUrl = this.options.baseURL + url.replace(/^\//, '')
+
+            useFetch(fullUrl, { ...this.options, method, ...config, ...param }).then((response) => {
+                const { data: { value }, error } = response
+                if (value) {
+                    if (value.code && value.code == 1) {
+                        resolve(value)
+                    } else {
+                        if (value.type && value.type == 'application/zip') {
                             resolve(value)
                         } else {
-                            if (value.type && value.type == 'application/zip') {
-                                resolve(value)
-                            } else {
-                                reject(value)
-                            }
+                            reject(value)
                         }
-                    } else {
-                        reject(error)
                     }
-                }).catch(err => {
-                    reject(err)
-                })
-            }, this.options.baseURL ? 0 : 500);
+                } else {
+                    reject(error)
+                }
+            }).catch(err => {
+                reject(err)
+            })
         })
     }
 
@@ -125,10 +129,10 @@ class Http {
         switch (code) {
             case 401:
                 useMemberStore().logout()
-                break;
+                break
             case 402:
                 navigateTo('/site/close', { replace: true })
-                break;
+                break
         }
     }
 
