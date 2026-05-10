@@ -1,0 +1,34 @@
+import lang from '@/lang'
+
+lang({
+    pointshop: {
+        pointshopGoods: '积分商品',
+        pointshopGoodsList: '商品列表',
+        addGoods: '添加商品',
+        editGoods: '编辑商品',
+        goodsName: '商品名称',
+        category: '分类',
+        selectCategory: '请选择分类',
+        goodsImage: '商品图片',
+        pointPrice: '积分价格',
+        marketPrice: '市场价格',
+        stock: '库存',
+        salesNum: '销量',
+        limitNum: '限购数量',
+        limitNumPlaceholder: '0表示不限购',
+        exchangeDesc: '兑换说明',
+        goodsContent: '商品详情',
+        sort: '排序',
+        status: '状态',
+        enable: '启用',
+        disable: '禁用',
+        keyword: '关键字',
+        keywordPlaceholder: '请输入商品名称',
+        upperShelf: '上架',
+        lowerShelf: '下架',
+        goodsInfo: '商品详情',
+        goodsNamePlaceholder: '请输入商品名称'
+    }
+})
+
+export default lang
