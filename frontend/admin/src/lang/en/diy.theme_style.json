@@ -1,0 +1,21 @@
+{
+  "themeName": "Theme Name",
+  "themeNamePlaceholder": "Please enter theme name",
+  "themeColor": "Theme Color",
+  "status": "Status",
+  "inUse": "In Use",
+  "notUsed": "Not Used",
+  "setUse": "Set as Active",
+  "addTheme": "Add Theme",
+  "editTheme": "Edit Theme",
+  "realTimePreview": "Real-time Preview",
+  "previewTitle": "Preview Title",
+  "previewContent": "Preview Content",
+  "primaryColor": "Primary Color",
+  "primaryLightColor": "Primary Light Color",
+  "secondaryColor": "Secondary Color",
+  "secondaryLightColor": "Secondary Light Color",
+  "secondaryDarkColor": "Secondary Dark Color",
+  "primaryTextColor": "Primary Text Color",
+  "secondaryTextColor": "Secondary Text Color"
+}

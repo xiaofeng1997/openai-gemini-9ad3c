@@ -1,0 +1,18 @@
+{
+	"ruleName": "Rule Name",
+	"ruleNameTips": "Rule name cannot be empty and maximum 60 characters",
+	"ruleNamePlaceholder": "Please enter rule name",
+	"keywordPlaceholder": "Please enter keyword",
+	"contentPlaceholder": "Please select reply content",
+	"allMatching": "Full Matching",
+	"fuzzyMatching": "Fuzzy Matching",
+	"keyword": "Keyword",
+	"content": "Reply Content",
+	"replyMethod": "Reply Method",
+	"replyMethodAll": "Reply All",
+	"replyMethodRand": "Reply Randomly",
+	"addReplyContent": "Add Reply Content",
+	"save": "Save",
+	"cancel": "Cancel",
+	"confirm": "Confirm"
+}

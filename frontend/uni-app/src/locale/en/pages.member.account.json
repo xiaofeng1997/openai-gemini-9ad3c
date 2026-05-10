@@ -1,0 +1,9 @@
+{
+    "alipayAccountNo": "Alipay QR Code",
+    "wechatCode":"WeChat QR Code",
+    "addBankCard": "Add Bank Card",
+    "addWechatCode":"Add WeChat QR Code",
+    "addAlipayAccount": "Add Alipay QR Code",
+    "endNumber": "Last 4 Digits",
+    "bankCard": "Bank Card"
+}

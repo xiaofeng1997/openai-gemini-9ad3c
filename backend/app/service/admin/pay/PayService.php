@@ -1,0 +1,144 @@
+<?php
+// +----------------------------------------------------------------------
+// | Niucloud-Lite-Ai 企业快速开发的管理平台
+// +----------------------------------------------------------------------
+// | 官方网址：https://www.niucloud.com
+// +----------------------------------------------------------------------
+// | niucloud团队 版权所有 开源版本可自由商用
+// +----------------------------------------------------------------------
+// | Author: Niucloud Team
+// +----------------------------------------------------------------------
+
+namespace app\service\admin\pay;
+
+use app\dict\common\ChannelDict;
+use app\dict\pay\PayDict;
+use app\model\pay\Pay;
+use app\service\core\pay\CorePayService;
+use app\service\core\paytype\CoreOfflineService;
+use core\base\BaseAdminService;
+use think\db\exception\DataNotFoundException;
+use think\db\exception\DbException;
+use think\db\exception\ModelNotFoundException;
+use think\facade\Log;
+
+/**
+ * 支付服务层
+ */
+class PayService extends BaseAdminService
+{
+
+    public function __construct()
+    {
+        parent::__construct();
+        $this->model = new Pay();
+    }
+
+    /**
+     * 待审核支付记录
+     * @param array $where
+     * @return mixed
+     */
+    public function getAuditPage(array $where)
+    {
+        $field = 'id, out_trade_no, type, money, body, voucher, create_time, trade_id, trade_type, status';
+        $search_model = $this->model->where([ [ 'type', '=', PayDict::OFFLINEPAY ] ])->withSearch([ 'create_time', 'out_trade_no', 'status' ], $where)->field($field)->append([ 'type_name' ])->order('create_time desc');
+        return $this->pageQuery($search_model);
+    }
+
+    /**
+     * 获取交易详情
+     * @param int $id
+     * @return void
+     */
+    public function getDetail(int $id)
+    {
+        $field = 'id,out_trade_no,trade_type,trade_id,trade_no,body,money,voucher,status,create_time,pay_time,cancel_time,type,channel,fail_reason';
+        return $this->model->where([ [ 'id', '=', $id ] ])
+            ->field($field)
+            ->append([ 'type_name', 'channel_name', 'status_name' ])
+            ->findOrEmpty()
+            ->toArray();
+    }
+
+    /**
+     * 支付审核通过
+     * @param string $out_trade_no
+     * @return null
+     */
+    public function pass(string $out_trade_no)
+    {
+        return ( new CoreOfflineService() )->pass($out_trade_no);
+    }
+
+    /**
+     * 支付审核未通过
+     * @param string $out_trade_no
+     * @param string $reason
+     */
+    public function refuse(string $out_trade_no, string $reason)
+    {
+        return ( new CoreOfflineService() )->refuse($out_trade_no, $reason);
+    }
+
+    /**
+     * 统计支付数据
+     * @param $where
+     * @return int
+     * @throws \think\db\exception\DbException
+     */
+    public function payCount($where)
+    {
+        return $this->model->where($where)->count();
+    }
+
+    /**
+     * 去支付
+     * @param string $type
+     * @param string $trade_type
+     * @param int $trade_id
+     * @param string $return_url
+     * @param string $quit_url
+     * @param string $buyer_id
+     * @return mixed
+     * @throws DataNotFoundException
+     * @throws DbException
+     * @throws ModelNotFoundException
+     */
+    public function pay(string $type, string $trade_type, int $trade_id, string $return_url = '', string $quit_url = '', string $buyer_id = '', string $voucher = '', string $openid = '')
+    {
+        return ( new CorePayService() )->pay($trade_type, $trade_id, $type, ChannelDict::PC, $openid, $return_url, $quit_url, $buyer_id, $voucher);
+    }
+
+    /**
+     * 获取支付信息
+     * @param string $trade_type
+     * @param int $trade_id
+     * @return array
+     */
+    public function getInfoByTrade(string $trade_type, int $trade_id)
+    {
+        return ( new CorePayService() )->getInfoByTrade($trade_type, $trade_id, ChannelDict::H5);
+    }
+
+    /**
+     * 获取支付方式列表
+     * @return array|array[]
+     * @throws DataNotFoundException
+     * @throws DbException
+     * @throws ModelNotFoundException
+     */
+    public function getPayTypeList()
+    {
+        $pay_type_list = ( new CorePayService() )->getPayTypeByTrade('', ChannelDict::H5);
+        if (!empty($pay_type_list)) {
+            foreach ($pay_type_list as $k => $v) {
+                if (!in_array($v['key'], [ PayDict::BALANCEPAY ])) {
+                    unset($pay_type_list[ $k ]);
+                }
+            }
+            $pay_type_list = array_values($pay_type_list);
+        }
+        return $pay_type_list;
+    }
+}

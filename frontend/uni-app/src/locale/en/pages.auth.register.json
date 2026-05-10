@@ -1,0 +1,18 @@
+{
+    "registering": "Registering",
+	"usernameRegisterTip":"Register with account password",
+	"mobileRegisterTip":"Register with mobile verification code",
+    "usernamePlaceholder": "Please enter account",
+    "usernameTips":"Account cannot be pure numbers",
+    "passwordPlaceholder": "Please enter password",
+    "confirmPasswordPlaceholder": "Please confirm password again",
+    "confirmPasswordError": "The two passwords do not match",
+    "resetpwd": "Forgot password",
+    "haveAccount": "Already have an account",
+    "toLogin": "Go to login",
+    "registerAgreeTips": "Registration means you agree to",
+    "isAgreeTips": "Please read and agree to the agreement",
+    "usernameRegister": "Account Registration",
+    "mobileRegister": "Mobile Registration",
+    "mobilePlaceholder": "Please enter mobile number"
+}

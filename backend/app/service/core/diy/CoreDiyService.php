@@ -1,0 +1,33 @@
+<?php
+// +----------------------------------------------------------------------
+// | Niucloud-Lite-Ai 企业快速开发的管理平台
+// +----------------------------------------------------------------------
+// | 官方网址：https://www.niucloud.com
+// +----------------------------------------------------------------------
+// | niucloud团队 版权所有 开源版本可自由商用
+// +----------------------------------------------------------------------
+// | Author: Niucloud Team
+// +----------------------------------------------------------------------
+
+namespace app\service\core\diy;
+
+use app\model\diy\Diy;
+use core\base\BaseCoreService;
+
+/**
+ * 自定义页面服务层
+ * Class CoreDiyService
+ * @package app\service\core\diy
+ */
+class CoreDiyService extends BaseCoreService
+{
+    /**
+     * 删除自定义页面
+     * @param $condition
+     * @return mixed
+     */
+    public function del($condition)
+    {
+        return ( new Diy() )->where($condition)->delete();
+    }
+}

@@ -1,0 +1,12 @@
+{
+	"applyTime": "Application Time",
+	"toBeReviewed": "Under review, please wait...",
+	"toBeTransfer": "Transferring, please wait...",
+	"transfer": "Transferred, please check",
+	"cancelApply": "Cash out cancelled",
+	"balanceDetail": "Balance Records",
+	"commissionDetail": "Commission Records",
+	"emptyTip": "No cash out records",
+	"commissemptyTip": "No commission records",
+	"rechargeType":"Cash out method:" 
+}

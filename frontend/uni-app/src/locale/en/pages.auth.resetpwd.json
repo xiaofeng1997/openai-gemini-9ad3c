@@ -1,0 +1,7 @@
+{
+  "findPassword": "Retrieve Password",
+  "findPasswordTip": "Enter mobile number to retrieve password",
+  "passwordPlaceholder": "Please enter password",
+  "confirmPasswordPlaceholder": "Please confirm password again",
+  "confirmPasswordError": "The two passwords do not match"
+}

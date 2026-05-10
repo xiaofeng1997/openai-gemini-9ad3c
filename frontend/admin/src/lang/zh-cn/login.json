@@ -1,0 +1,19 @@
+{
+    "siteTitle": "NIUCLOUD-ADMIN",
+    "logging": "登录中",
+    "platform": "管理端",
+    "login" : "登录",
+    "adminLogin": "平台登录",
+    "userPlaceholder": "请输入您的账号",
+    "passwordPlaceholder": "请输入您的密码",
+    "manageAdminFramework": "管理系统后台框架",
+    "brandLabel": "NIUCLOUD Lite AI",
+    "brandTitle": "极简极速开发框架",
+    "brandDesc": "粘贴即用、极速上线，高度适配外包项目与小型轻量化项目开发需求",
+    "brandFeature1": "轻量极简，易上手",
+    "brandFeature2": "原生 AI 集成，开箱即用",
+    "brandFeature3": "灵活高效，专注业务",
+    "brandFooter": "牛之云网络科技有限公司",
+    "accountPasswordLogin": "账号密码登录",
+    "welcomeUse": "欢迎使用"
+}

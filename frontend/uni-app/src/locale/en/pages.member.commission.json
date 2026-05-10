@@ -1,0 +1,12 @@
+{
+  "recharge": "Recharge",
+  "cashOut": "Cash Out",
+  "transferMoney": "Cash Out",
+  "commissionDetail": "Commission Details",
+  "accountCommission": "Current Commission (CNY)",
+  "commission": "Total Commission (CNY)",
+  "money": "Pending Commission (CNY)",
+  "availableCommission": "Available Commission",
+  "yuan": "CNY",
+  "commissionInfo": "My Commission"
+}

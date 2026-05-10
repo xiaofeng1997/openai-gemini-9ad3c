@@ -1,0 +1,16 @@
+{
+    "title": "Niucloud Vite Management side",
+    "login": "Login",
+    "logging": "Logging",
+    "userPlaceholder": "Please enter your account number",
+    "passwordPlaceholder": "Please enter your password",
+    "brandLabel": "NIUCLOUD Lite AI",
+    "brandTitle": "Minimal, fast development framework",
+    "brandDesc": "Paste and deploy, go live fast — ideal for outsourcing and lightweight projects.",
+    "brandFeature1": "Lightweight and easy to start",
+    "brandFeature2": "Native AI integration, ready out of the box",
+    "brandFeature3": "Flexible and efficient, focus on business",
+    "brandFooter": "Niu Zhi Yun Network Technology Co., Ltd.",
+    "accountPasswordLogin": "Account login",
+    "welcomeUse": "Welcome"
+}

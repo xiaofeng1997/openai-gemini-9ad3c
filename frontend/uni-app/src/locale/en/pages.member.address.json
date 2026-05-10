@@ -1,0 +1,6 @@
+{
+    "address": "Shipping Address",
+    "locationAddress": "Local Delivery Address",
+    "createAddress": "Create New Address",
+    "default": "Default"
+}

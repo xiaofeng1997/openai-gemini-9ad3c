@@ -1,0 +1,21 @@
+{
+  "themeName": "主题名称",
+  "themeNamePlaceholder": "请输入主题名称",
+  "themeColor": "主题颜色",
+  "status": "状态",
+  "inUse": "使用中",
+  "notUsed": "未使用",
+  "setUse": "设置使用",
+  "addTheme": "添加主题",
+  "editTheme": "编辑主题",
+  "realTimePreview": "实时预览",
+  "previewTitle": "预览标题",
+  "previewContent": "预览内容",
+  "primaryColor": "主题主色",
+  "primaryLightColor": "主题浅色",
+  "secondaryColor": "辅助色",
+  "secondaryLightColor": "辅助浅色",
+  "secondaryDarkColor": "辅助深色",
+  "primaryTextColor": "主题文字色",
+  "secondaryTextColor": "辅助文字色"
+}

@@ -1,0 +1,11 @@
+{
+    "labelName":"标签名称",
+    "memo":"备注",
+    "sort":"排序",
+    "labelNamePlaceholder":"请输入标签名称",
+    "memoPlaceholder":"请输入备注",
+    "sortPlaceholder":"请输入排序",
+    "addMemberLabel":"添加用户标签",
+    "updateMemberLabel":"编辑用户标签",
+    "memberLabelDeleteTips":"确定要删除该用户标签吗？"
+}

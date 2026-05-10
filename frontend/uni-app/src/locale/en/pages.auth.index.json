@@ -1,0 +1,9 @@
+{
+	"quickLoginOrLogout": "Quick Login/Register",
+	"login": "Login",
+	"otherLogin": "Other Login Methods",
+	"accountLogin": "Account Password Login",
+	"mobileLogin": "Mobile Login",
+	"otherMobileLogin": "Other Mobile Login",
+	"memberLock":"Account Locked"
+}

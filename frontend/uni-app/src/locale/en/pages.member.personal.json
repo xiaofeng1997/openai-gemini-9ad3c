@@ -1,0 +1,12 @@
+{
+    "nickname": "Nickname",
+    "sex": "Gender",
+    "mobile": "Mobile",
+    "birthday": "Birthday",
+    "unknown": "Unknown",
+    "headimg": "Avatar",
+    "updateHeadimg": "Update Avatar",
+    "updateNickname": "Update Nickname",
+    "man": "Male",
+    "woman": "Female"
+}

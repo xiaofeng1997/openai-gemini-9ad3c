@@ -1,0 +1,18 @@
+{
+    "logining": "Logging in",
+    "usernamePlaceholder": "Please enter account",
+    "passwordPlaceholder": "Please enter password",
+    "resetpwd": "Forgot password",
+    "noAccount": "No account yet",
+    "toRegister": "Go to register",
+    "agreeTips": "Login means you agree to",
+    "isAgreeTips": "Please read and agree to the agreement",
+    "mobilePlaceholder": "Please enter mobile number",
+    "oneClicklogin":"Quick Login",
+	"accountLogin":"Account Password Login",
+	"accountLoginTip":"Enter account password to login",
+	"accountLoginError":"Merchant has not enabled account password login",
+	"mobileLogin":"Mobile Login",
+	"mobileLoginTip":"Enter mobile verification code to login",
+	"mobileLoginError":"Merchant has not enabled mobile login"
+}

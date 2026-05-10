@@ -1,0 +1,14 @@
+{
+    "name": "Recipient",
+    "namePlaceholder": "Please enter recipient name",
+    "mobile": "Mobile Number",
+    "mobilePlaceholder": "Please enter mobile number",
+	"deliveryAddress":"Delivery Address",
+    "selectAddress":"Select Address",
+    "selectAddressPlaceholder":"Please select address",
+    "address": "Building and Room",
+    "addressPlaceholder": "Detailed address such as Unit 1, Room 101",
+    "addressError": "Please enter room number",
+    "defaultAddress": "Set as default address",
+    "update": "Update"
+}

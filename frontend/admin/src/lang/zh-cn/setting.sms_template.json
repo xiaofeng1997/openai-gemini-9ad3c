@@ -1,0 +1,16 @@
+{
+      "smsTemplate":"短信模板",
+      "buyerNotice": "会员消息",
+      "sellerNotice":"商家消息",
+      "sms":"短信",
+      "noticeType":"消息类型",
+      "smsChannel":"短信通道",
+      "templateId":"模板ID",
+      "edit":"编辑",
+      "noticeSetting":"消息设置",
+      "smsId":"短信模板ID",
+      "smsIdPlaceholder":"请输入短信模板ID",
+      "smsContent":"短信内容",
+      "title":"场景",
+      "name":"模板名称"
+}

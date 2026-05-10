@@ -1,0 +1,12 @@
+{
+    "name": "Recipient",
+    "namePlaceholder": "Please enter recipient name",
+    "mobile": "Mobile Number",
+    "mobilePlaceholder": "Please enter mobile number",
+    "selectArea":"Select Area",
+    "selectAreaPlaceholder":"Please select area",
+    "address": "Detailed Address",
+    "addressPlaceholder": "Please enter detailed address",
+    "defaultAddress": "Set as default address",
+    "selectAddressPlaceholder":"Please select address"
+}
