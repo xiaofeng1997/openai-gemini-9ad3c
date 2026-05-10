@@ -1,0 +1,391 @@
+<template>
+    <div class="publish-container">
+        <div class="form-section">
+            <div class="form-item">
+                <text class="label">服务名称</text>
+                <input 
+                    class="input" 
+                    v-model="form.name" 
+                    placeholder="请输入服务名称"
+                    maxlength="50"
+                />
+            </div>
+
+            <div class="form-item">
+                <text class="label">服务分类</text>
+                <picker 
+                    mode="selector" 
+                    :range="categoryList" 
+                    range-key="name"
+                    @change="onCategoryChange"
+                >
+                    <div class="picker-box">
+                        <text :class="['picker-value', { placeholder: !form.category_id }]">
+                            {{ selectedCategoryName || '请选择服务分类' }}
+                        </text>
+                        <text class="picker-arrow">></text>
+                    </div>
+                </picker>
+            </div>
+
+            <div class="form-item">
+                <text class="label">服务图片</text>
+                <div class="image-list">
+                    <div 
+                        v-for="(img, index) in form.images" 
+                        :key="index"
+                        class="image-item"
+                    >
+                        <image :src="getImagePath(img)" mode="aspectFill" />
+                        <text class="remove-btn" @click="removeImage(index)">×</text>
+                    </div>
+                    <div class="add-image" @click="chooseImage" v-if="form.images.length < 5">
+                        <text>+</text>
+                    </div>
+                </div>
+                <text class="upload-tip">最多上传5张图片，第一张将作为封面</text>
+            </div>
+
+            <div class="form-item">
+                <text class="label">服务描述</text>
+                <textarea 
+                    class="textarea" 
+                    v-model="form.desc" 
+                    placeholder="请详细描述您的服务内容、服务时长、注意事项等"
+                    maxlength="1000"
+                />
+            </div>
+
+            <div class="form-item">
+                <text class="label">所需积分</text>
+                <div class="points-input">
+                    <input 
+                        class="input" 
+                        v-model="form.points" 
+                        placeholder="设置服务所需积分"
+                        type="number"
+                    />
+                    <text class="points-unit">积分/次</text>
+                </div>
+            </div>
+
+            <div class="form-item">
+                <text class="label">服务地址</text>
+                <input 
+                    class="input" 
+                    v-model="form.address" 
+                    placeholder="请输入服务地址"
+                    maxlength="100"
+                />
+            </div>
+
+            <div class="form-item">
+                <text class="label">联系电话</text>
+                <input 
+                    class="input" 
+                    v-model="form.mobile" 
+                    placeholder="请输入联系电话"
+                    type="number"
+                    maxlength="11"
+                />
+            </div>
+        </div>
+
+        <div class="bottom-bar">
+            <button class="btn-submit" :disabled="submitting" @click="submitForm">
+                {{ submitting ? '发布中...' : '立即发布' }}
+            </button>
+        </div>
+    </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
+import { getVolunteerCategoryLists, publishVolunteerService } from '@/api/volunteer'
+
+const categoryList = ref<any[]>([])
+const submitting = ref(false)
+const form = ref({
+    name: '',
+    category_id: 0,
+    images: [] as string[],
+    desc: '',
+    points: '',
+    address: '',
+    mobile: ''
+})
+
+const selectedCategoryName = computed(() => {
+    const category = categoryList.value.find(c => c.id === form.value.category_id)
+    return category?.name || ''
+})
+
+const getImagePath = (path: string) => {
+    if (!path) return ''
+    if (path.startsWith('http')) return path
+    return import.meta.env.VITE_APP_IMG_URL + path
+}
+
+const onCategoryChange = (e: any) => {
+    const index = e.detail.value
+    form.value.category_id = categoryList.value[index].id
+}
+
+const chooseImage = () => {
+    uni.chooseImage({
+        count: 5 - form.value.images.length,
+        sizeType: ['compressed'],
+        sourceType: ['album', 'camera'],
+        success: (res) => {
+            const tempPaths = res.tempFilePaths
+            tempPaths.forEach((tempPath: string) => {
+                uni.uploadFile({
+                    url: import.meta.env.VITE_APP_API_URL + '/upload/image',
+                    filePath: tempPath,
+                    name: 'file',
+                    success: (uploadRes) => {
+                        const data = JSON.parse(uploadRes.data)
+                        if (data.code === 1) {
+                            form.value.images.push(data.url)
+                        }
+                    }
+                })
+            })
+        }
+    })
+}
+
+const removeImage = (index: number) => {
+    form.value.images.splice(index, 1)
+}
+
+const loadCategories = async () => {
+    try {
+        const res = await getVolunteerCategoryLists()
+        categoryList.value = res.lists || []
+    } catch (error) {
+        console.error('加载分类失败', error)
+    }
+}
+
+const submitForm = async () => {
+    if (!form.value.name.trim()) {
+        uni.showToast({ title: '请输入服务名称', icon: 'none' })
+        return
+    }
+    if (!form.value.category_id) {
+        uni.showToast({ title: '请选择服务分类', icon: 'none' })
+        return
+    }
+    if (form.value.images.length === 0) {
+        uni.showToast({ title: '请上传服务图片', icon: 'none' })
+        return
+    }
+    if (!form.value.desc.trim()) {
+        uni.showToast({ title: '请输入服务描述', icon: 'none' })
+        return
+    }
+    if (!form.value.points || parseInt(form.value.points) <= 0) {
+        uni.showToast({ title: '请设置正确的积分', icon: 'none' })
+        return
+    }
+
+    submitting.value = true
+    try {
+        await publishVolunteerService({
+            category_id: form.value.category_id,
+            name: form.value.name,
+            image: form.value.images[0],
+            images: JSON.stringify(form.value.images),
+            desc: form.value.desc,
+            points: parseInt(form.value.points),
+            address: form.value.address,
+            mobile: form.value.mobile
+        })
+        uni.showToast({ title: '发布成功', icon: 'success' })
+        setTimeout(() => {
+            uni.navigateBack()
+        }, 1500)
+    } catch (error: any) {
+        uni.showToast({ title: error.message || '发布失败', icon: 'none' })
+    } finally {
+        submitting.value = false
+    }
+}
+
+onMounted(() => {
+    loadCategories()
+})
+</script>
+
+<style lang="scss" scoped>
+.publish-container {
+    min-height: 100vh;
+    background: #f5f5f5;
+    padding-bottom: 140rpx;
+}
+
+.form-section {
+    background: #fff;
+    margin: 20rpx;
+    border-radius: 16rpx;
+}
+
+.form-item {
+    padding: 30rpx;
+    border-bottom: 1rpx solid #f0f0f0;
+    
+    &:last-child {
+        border-bottom: none;
+    }
+}
+
+.label {
+    display: block;
+    font-size: 28rpx;
+    color: #333;
+    font-weight: 500;
+    margin-bottom: 16rpx;
+}
+
+.input {
+    width: 100%;
+    height: 80rpx;
+    padding: 0 20rpx;
+    font-size: 30rpx;
+    color: #333;
+    background: #f9f9f9;
+    border-radius: 8rpx;
+    box-sizing: border-box;
+}
+
+.picker-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 80rpx;
+    padding: 0 20rpx;
+    font-size: 30rpx;
+    background: #f9f9f9;
+    border-radius: 8rpx;
+}
+
+.picker-value {
+    color: #333;
+    
+    &.placeholder {
+        color: #999;
+    }
+}
+
+.picker-arrow {
+    color: #ccc;
+}
+
+.image-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16rpx;
+}
+
+.image-item {
+    position: relative;
+    width: 180rpx;
+    height: 180rpx;
+    
+    image {
+        width: 100%;
+        height: 100%;
+        border-radius: 12rpx;
+    }
+}
+
+.remove-btn {
+    position: absolute;
+    top: -16rpx;
+    right: -16rpx;
+    width: 40rpx;
+    height: 40rpx;
+    background: #ff4d4f;
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28rpx;
+}
+
+.add-image {
+    width: 180rpx;
+    height: 180rpx;
+    background: #f9f9f9;
+    border-radius: 12rpx;
+    border: 2rpx dashed #ddd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    text {
+        font-size: 60rpx;
+        color: #ccc;
+    }
+}
+
+.upload-tip {
+    display: block;
+    font-size: 24rpx;
+    color: #999;
+    margin-top: 12rpx;
+}
+
+.textarea {
+    width: 100%;
+    height: 240rpx;
+    padding: 20rpx;
+    font-size: 30rpx;
+    color: #333;
+    background: #f9f9f9;
+    border-radius: 8rpx;
+    box-sizing: border-box;
+}
+
+.points-input {
+    display: flex;
+    align-items: center;
+    gap: 16rpx;
+    
+    .input {
+        flex: 1;
+    }
+    
+    .points-unit {
+        font-size: 28rpx;
+        color: #666;
+    }
+}
+
+.bottom-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 20rpx 30rpx;
+    padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
+    background: #fff;
+    box-shadow: 0 -2rpx 10rpx rgba(0, 0, 0, 0.05);
+}
+
+.btn-submit {
+    width: 100%;
+    padding: 24rpx;
+    font-size: 32rpx;
+    color: #fff;
+    background: linear-gradient(135deg, #1890ff, #096dd9);
+    border: none;
+    border-radius: 48rpx;
+    
+    &[disabled] {
+        opacity: 0.6;
+    }
+}
+</style>

@@ -1,0 +1,340 @@
+<template>
+    <div class="my-volunteer-container">
+        <div class="header-bg">
+            <div class="user-info" v-if="volunteer">
+                <image 
+                    class="avatar" 
+                    :src="getImagePath(volunteer.avatar)" 
+                    mode="aspectFill"
+                />
+                <div class="info">
+                    <div class="name">{{ volunteer.nickname || volunteer.name }}</div>
+                    <div :class="['status-badge', `status-${volunteer.status}`]">
+                        {{ getStatusName(volunteer.status) }}
+                    </div>
+                </div>
+            </div>
+            <div class="user-info" v-else>
+                <button class="btn-apply" @click="goApply">申请成为志愿者</button>
+            </div>
+        </div>
+
+        <div class="stats-grid" v-if="volunteer">
+            <div class="stat-item">
+                <div class="stat-value">{{ stats.serve_count || 0 }}</div>
+                <div class="stat-label">服务次数</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ stats.order_count || 0 }}</div>
+                <div class="stat-label">接单数</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ stats.points || 0 }}</div>
+                <div class="stat-label">获得积分</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ stats.rating || '5.0' }}</div>
+                <div class="stat-label">服务评分</div>
+            </div>
+        </div>
+
+        <div class="menu-section" v-if="volunteer">
+            <div class="menu-item" @click="goMyService">
+                <text class="menu-icon">📋</text>
+                <text class="menu-text">我的发布</text>
+                <text class="menu-arrow">></text>
+            </div>
+            <div class="menu-item" @click="goMyOrder">
+                <text class="menu-icon">📝</text>
+                <text class="menu-text">我的接单</text>
+                <text class="menu-arrow">></text>
+            </div>
+            <div class="menu-item" @click="goEditProfile">
+                <text class="menu-icon">✏️</text>
+                <text class="menu-text">编辑资料</text>
+                <text class="menu-arrow">></text>
+            </div>
+        </div>
+
+        <div class="menu-section" v-if="volunteer && volunteer.status === 'pending'">
+            <div class="notice-box">
+                <text class="notice-title">审核中</text>
+                <text class="notice-desc">您的志愿者申请正在审核中，请耐心等待...</text>
+            </div>
+        </div>
+
+        <div class="menu-section" v-if="volunteer && volunteer.status === 'rejected'">
+            <div class="notice-box rejected">
+                <text class="notice-title">申请被拒绝</text>
+                <text class="notice-desc">{{ volunteer.reject_reason || '您的申请未通过审核，可重新提交申请' }}</text>
+                <button class="btn-reapply" @click="goApply">重新申请</button>
+            </div>
+        </div>
+
+        <div class="menu-section">
+            <div class="menu-item" @click="goOrderList">
+                <text class="menu-icon">📑</text>
+                <text class="menu-text">我的预约</text>
+                <text class="menu-arrow">></text>
+            </div>
+            <div class="menu-item" @click="goPoints">
+                <text class="menu-icon">💰</text>
+                <text class="menu-text">我的积分</text>
+                <text class="menu-arrow">></text>
+            </div>
+        </div>
+
+        <div class="menu-section">
+            <div class="menu-item" @click="showRules">
+                <text class="menu-icon">📖</text>
+                <text class="menu-text">积分规则</text>
+                <text class="menu-arrow">></text>
+            </div>
+            <div class="menu-item" @click="showHelp">
+                <text class="menu-icon">❓</text>
+                <text class="menu-text">帮助与反馈</text>
+                <text class="menu-arrow">></text>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import { getMyVolunteerInfo } from '@/api/volunteer'
+
+const volunteer = ref<any>(null)
+const stats = ref<any>({})
+
+const getImagePath = (path: string) => {
+    if (!path) return '/static/images/default_avatar.png'
+    if (path.startsWith('http')) return path
+    return import.meta.env.VITE_APP_IMG_URL + path
+}
+
+const getStatusName = (status: string) => {
+    const statusMap: Record<string, string> = {
+        pending: '审核中',
+        active: '已认证',
+        rejected: '未通过',
+        frozen: '已冻结'
+    }
+    return statusMap[status] || status
+}
+
+const loadData = async () => {
+    try {
+        const res = await getMyVolunteerInfo()
+        volunteer.value = res.info
+        stats.value = res.stats || {}
+    } catch (error) {
+        console.error('加载志愿者信息失败', error)
+    }
+}
+
+const goApply = () => {
+    uni.navigateTo({ url: '/pages/volunteer/apply' })
+}
+
+const goMyService = () => {
+    uni.navigateTo({ url: '/pages/volunteer/my_service' })
+}
+
+const goMyOrder = () => {
+    uni.navigateTo({ url: '/pages/volunteer/volunteer_order_list' })
+}
+
+const goEditProfile = () => {
+    uni.navigateTo({ url: '/pages/volunteer/edit_profile' })
+}
+
+const goOrderList = () => {
+    uni.navigateTo({ url: '/pages/volunteer/order_list' })
+}
+
+const goPoints = () => {
+    uni.switchTab({ url: '/pages/member/index' })
+}
+
+const showRules = () => {
+    uni.navigateTo({ url: '/pages/points/rules' })
+}
+
+const showHelp = () => {
+    uni.navigateTo({ url: '/pages/points/help' })
+}
+
+onMounted(() => {
+    loadData()
+})
+</script>
+
+<style lang="scss" scoped>
+.my-volunteer-container {
+    min-height: 100vh;
+    background: #f5f5f5;
+}
+
+.header-bg {
+    background: linear-gradient(135deg, #1890ff, #096dd9);
+    padding: 60rpx 30rpx 80rpx;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 24rpx;
+}
+
+.avatar {
+    width: 120rpx;
+    height: 120rpx;
+    border-radius: 50%;
+    border: 4rpx solid rgba(255, 255, 255, 0.3);
+    background: #fff;
+}
+
+.info {
+    flex: 1;
+}
+
+.name {
+    font-size: 36rpx;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 12rpx;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 6rpx 20rpx;
+    font-size: 24rpx;
+    border-radius: 20rpx;
+    
+    &.status-pending {
+        background: rgba(255, 255, 255, 0.2);
+        color: #fff;
+    }
+    
+    &.status-active {
+        background: #52c41a;
+        color: #fff;
+    }
+    
+    &.status-rejected {
+        background: #ff4d4f;
+        color: #fff;
+    }
+    
+    &.status-frozen {
+        background: #999;
+        color: #fff;
+    }
+}
+
+.btn-apply {
+    width: 100%;
+    padding: 24rpx;
+    font-size: 30rpx;
+    color: #1890ff;
+    background: #fff;
+    border: none;
+    border-radius: 48rpx;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    background: #fff;
+    margin: -40rpx 30rpx 20rpx;
+    border-radius: 16rpx;
+    padding: 30rpx 0;
+    box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.08);
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 36rpx;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8rpx;
+}
+
+.stat-label {
+    font-size: 24rpx;
+    color: #999;
+}
+
+.menu-section {
+    background: #fff;
+    margin: 20rpx 0;
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    padding: 30rpx;
+    border-bottom: 1rpx solid #f0f0f0;
+    
+    &:last-child {
+        border-bottom: none;
+    }
+}
+
+.menu-icon {
+    font-size: 40rpx;
+    margin-right: 20rpx;
+}
+
+.menu-text {
+    flex: 1;
+    font-size: 30rpx;
+    color: #333;
+}
+
+.menu-arrow {
+    font-size: 28rpx;
+    color: #ccc;
+}
+
+.notice-box {
+    padding: 30rpx;
+    background: #fff7e6;
+    
+    .notice-title {
+        display: block;
+        font-size: 28rpx;
+        font-weight: 600;
+        color: #ff8800;
+        margin-bottom: 8rpx;
+    }
+    
+    .notice-desc {
+        display: block;
+        font-size: 26rpx;
+        color: #666;
+        line-height: 1.5;
+    }
+    
+    &.rejected {
+        background: #fff2f0;
+        
+        .notice-title {
+            color: #ff4d4f;
+        }
+    }
+}
+
+.btn-reapply {
+    margin-top: 20rpx;
+    padding: 16rpx 40rpx;
+    font-size: 26rpx;
+    color: #fff;
+    background: #ff4d4f;
+    border: none;
+    border-radius: 32rpx;
+}
+</style>

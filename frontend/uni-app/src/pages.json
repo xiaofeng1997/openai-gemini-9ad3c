@@ -120,6 +120,13 @@
             "root": "pages/member",
             "pages": [
                 {
+                    "path": "volunteer",
+                    "style": {
+                        "navigationBarTitleText": "%pages.member.volunteer%"
+                    },
+                    "needLogin": true
+                },
+                {
                     "path": "apply_cash_out",
                     "style": {
                         "navigationBarTitleText": "%pages.member.apply_cash_out%"
